@@ -1,0 +1,15 @@
+name: MineCourt
+version: 1.0.0
+main: ru.minecourt.MineCourtPlugin
+api-version: '26.2'
+description: Судебная система сервера
+author: MineCourt
+commands:
+  court:
+    description: Управление судебными делами
+    usage: /court <create|view|setjudge>
+    aliases: [суд]
+permissions:
+  minecourt.setjudge:
+    description: Позволяет назначать судью
+    default: op
