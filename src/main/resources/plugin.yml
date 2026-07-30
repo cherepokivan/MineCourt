@@ -7,7 +7,7 @@ author: MineCourt
 commands:
   court:
     description: Управление судебными делами
-    usage: /court <create|view|setjudge>
+    usage: /court <create|view|close|setjudge>
     aliases: [суд]
 permissions:
   minecourt.setjudge:

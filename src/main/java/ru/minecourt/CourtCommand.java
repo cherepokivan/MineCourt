@@ -35,6 +35,7 @@ public final class CourtCommand implements CommandExecutor, TabCompleter {
         return switch (args[0].toLowerCase(Locale.ROOT)) {
             case "create" -> create(sender, args);
             case "view" -> view(sender);
+            case "close" -> close(sender, args);
             case "setjudge" -> setJudge(sender, args);
             default -> {
                 sendUsage(sender);
@@ -112,16 +113,44 @@ public final class CourtCommand implements CommandExecutor, TabCompleter {
         return true;
     }
 
+    private boolean close(CommandSender sender, String[] args) {
+        if (!sender.hasPermission("minecourt.setjudge")) {
+            sender.sendMessage("§cУ вас нет прав для закрытия судебного дела.");
+            return true;
+        }
+        if (args.length != 2) {
+            sender.sendMessage("§cИспользование: /court close <номер>");
+            return true;
+        }
+        int caseNumber;
+        try {
+            caseNumber = Integer.parseInt(args[1]);
+        } catch (NumberFormatException exception) {
+            sender.sendMessage("§cНомер дела должен быть целым числом.");
+            return true;
+        }
+        CourtCase closedCase = courtService.closeCase(caseNumber);
+        if (closedCase == null) {
+            sender.sendMessage("§cДело с номером §e" + caseNumber + " §cне найдено.");
+            return true;
+        }
+        String message = "§6[MineCourt] §fСудебное дело §e#" + caseNumber + " §fзакрыто: §e"
+                + closedCase.plaintiffName() + " §fпротив §e" + closedCase.defendantName() + "§f.";
+        Bukkit.broadcastMessage(message);
+        return true;
+    }
+
     private void sendUsage(CommandSender sender) {
         sender.sendMessage("§6MineCourt: §f/court create <ник> <причина>");
         sender.sendMessage("§6MineCourt: §f/court view");
+        sender.sendMessage("§6MineCourt: §f/court close <номер>");
         sender.sendMessage("§6MineCourt: §f/court setjudge <ник>");
     }
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            return filter(List.of("create", "view", "setjudge"), args[0]);
+            return filter(List.of("create", "view", "close", "setjudge"), args[0]);
         }
         if (args.length == 2 && (args[0].equalsIgnoreCase("create") || args[0].equalsIgnoreCase("setjudge"))) {
             return filter(Bukkit.getOnlinePlayers().stream().map(Player::getName).toList(), args[1]);

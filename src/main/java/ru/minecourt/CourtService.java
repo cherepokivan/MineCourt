@@ -49,6 +49,15 @@ public final class CourtService {
         return List.copyOf(cases);
     }
 
+    public CourtCase closeCase(int caseNumber) {
+        if (caseNumber < 1 || caseNumber > cases.size()) {
+            return null;
+        }
+        CourtCase closedCase = cases.remove(caseNumber - 1);
+        save();
+        return closedCase;
+    }
+
     public void setJudge(OfflinePlayer judge) {
         judgeId = judge.getUniqueId();
         judgeName = playerName(judge);
