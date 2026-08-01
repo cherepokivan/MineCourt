@@ -1,36 +1,66 @@
 # MineCourt
 
-MineCourt — плагин судебной системы для серверов **Paper 26.2**.
+MineCourt is a lightweight court system plugin for Paper servers. Players can submit court cases against other players, while administrators can appoint a judge and close cases.
 
-## Возможности
+## Features
 
-- `/court create <ник> <причина>` или `/суд create <ник> <причина>` — подать заявление в суд.
-- `/court view` или `/суд view` — посмотреть все поданные заявления: кто, на кого и по какой причине.
-- `/court close <номер>` или `/суд close <номер>` — закрыть и удалить дело из списка. Доступно только OP или игрокам с правом `minecourt.setjudge`.
-- `/court setjudge <ник>` или `/суд setjudge <ник>` — назначить судью. Доступно только OP или игрокам с правом `minecourt.setjudge`.
-- При создании дела все игроки онлайн получают уведомление о подаче в суд.
-- Назначенный судья получает то же уведомление с указанной причиной.
-- Игрок, на которого подали в суд, получает сообщение: «На вас подали в суд! Явитесь в течение 3–5 минут!».
-- При закрытии дела все игроки онлайн получают уведомление.
-- Судья и все дела сохраняются в `plugins/MineCourt/config.yml` и не пропадают после перезапуска сервера.
+- Submit a court case with a player name and reason.
+- Notify every online player when a case is submitted.
+- Send the appointed judge an additional notification containing the reason.
+- Notify the defendant that they must appear in court within 3–5 minutes.
+- Browse all open cases, including plaintiff, defendant, reason, and submission date.
+- Appoint a judge.
+- Close and remove cases from the list.
+- Persist the judge and all open cases across server restarts.
 
-## Установка
+## Commands
 
-1. Скачайте `MineCourt.jar` из артефактов успешного запуска GitHub Actions или соберите проект командой `mvn package` на Java 25.
-2. Поместите JAR в папку `plugins` Paper-сервера.
-3. Перезапустите сервер.
-4. Назначьте судью: `/court setjudge НикИгрока`.
+`/court` and `/суд` are identical command aliases.
 
-## Требования
+| Command | Description | Permission |
+| --- | --- | --- |
+| `/court create <player> <reason>` | Submit a court case against a player. | Everyone |
+| `/court view` | View all open court cases. | Everyone |
+| `/court close <number>` | Close and permanently remove a case. Use its number from `/court view`. | `minecourt.setjudge` / OP |
+| `/court setjudge <player>` | Appoint a player as the court judge. | `minecourt.setjudge` / OP |
 
-- Paper `26.2`, build `87`.
-- Java 25.
+## Notifications
 
-## Сборка на GitHub
+When a case is created:
 
-Workflow в `.github/workflows/build.yml` запускается на каждый push и pull request. После успешного выполнения откройте вкладку **Actions**, выберите запуск и скачайте артефакт **MineCourt** — в нём находится `MineCourt.jar`.
+- All online players receive: `Player <plaintiff> filed a court case against <defendant>.`
+- The appointed judge receives the same message with the case reason.
+- The defendant receives: `A court case has been filed against you! Appear within 3–5 minutes!`
 
-## Примечания
+When a case is closed, every online player receives a notification.
 
-- Для `create` и `setjudge` игрок должен хотя бы один раз зайти на сервер, если он сейчас не в сети.
-- Плагин не ограничивает число дел: каждое заявление добавляется в общий список.
+## Permissions
+
+| Permission | Description | Default |
+| --- | --- | --- |
+| `minecourt.setjudge` | Allows appointing a judge and closing cases. | OP |
+
+## Installation
+
+1. Download `MineCourt.jar` from the Modrinth release or GitHub Actions artifact.
+2. Place it in your Paper server's `plugins` folder.
+3. Start or restart the server.
+4. Appoint a judge with `/court setjudge <player>`.
+
+## Requirements
+
+- Java `25`
+
+## Data storage
+
+MineCourt stores the appointed judge and open court cases in:
+
+```text
+plugins/MineCourt/config.yml
+```
+
+Players specified in `create` or `setjudge` must be online or have joined the server at least once.
+
+## Building from source
+
+This repository includes a GitHub Actions workflow that builds the plugin on every push and pull request. The compiled JAR is uploaded as the `MineCourt` workflow artifact.
