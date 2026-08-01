@@ -1,3 +1,6 @@
-# Не изменяйте UUID вручную. Плагин заполнит этот файл сам.
+# Available values: RU, EN
+Languale: RU
+
+# Do not change UUID values manually. MineCourt updates this section automatically.
 judge: {}
 cases: {}

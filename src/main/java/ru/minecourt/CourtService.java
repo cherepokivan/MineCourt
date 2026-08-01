@@ -2,6 +2,7 @@ package ru.minecourt;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -11,12 +12,14 @@ import org.bukkit.entity.Player;
 
 public final class CourtService {
     private final MineCourtPlugin plugin;
+    private final MessageService messages;
     private final List<CourtCase> cases = new ArrayList<>();
     private UUID judgeId;
     private String judgeName;
 
-    public CourtService(MineCourtPlugin plugin) {
+    public CourtService(MineCourtPlugin plugin, MessageService messages) {
         this.plugin = plugin;
+        this.messages = messages;
         load();
     }
 
@@ -26,8 +29,10 @@ public final class CourtService {
                 reason, System.currentTimeMillis()));
         save();
 
-        String publicMessage = "§6[MineCourt] §fИгрок §e" + plaintiff.getName()
-                + " §fподал в суд на игрока §e" + defendantName + "§f.";
+        String publicMessage = messages.get("case-submitted-public", Map.of(
+                "plaintiff", plaintiff.getName(),
+                "defendant", defendantName
+        ));
         for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
             if (!onlinePlayer.getUniqueId().equals(judgeId)) {
                 onlinePlayer.sendMessage(publicMessage);
@@ -36,12 +41,16 @@ public final class CourtService {
 
         Player judge = getOnlineJudge();
         if (judge != null) {
-            judge.sendMessage(publicMessage + " §fПричина: §e" + reason);
+            judge.sendMessage(messages.get("case-submitted-judge", Map.of(
+                    "plaintiff", plaintiff.getName(),
+                    "defendant", defendantName,
+                    "reason", reason
+            )));
         }
 
         Player defendantPlayer = defendant.getPlayer();
         if (defendantPlayer != null) {
-            defendantPlayer.sendMessage("§c[MineCourt] На вас подали в суд! §fЯвитесь в течение 3–5 минут!");
+            defendantPlayer.sendMessage(messages.get("defendant-notification"));
         }
     }
 

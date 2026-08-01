@@ -1,12 +1,10 @@
 package ru.minecourt;
 
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Collectors;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -17,13 +15,12 @@ import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 
 public final class CourtCommand implements CommandExecutor, TabCompleter {
-    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")
-            .withLocale(new Locale("ru"))
-            .withZone(ZoneId.systemDefault());
     private final CourtService courtService;
+    private final MessageService messages;
 
-    public CourtCommand(CourtService courtService) {
+    public CourtCommand(CourtService courtService, MessageService messages) {
         this.courtService = courtService;
+        this.messages = messages;
     }
 
     @Override
@@ -46,11 +43,11 @@ public final class CourtCommand implements CommandExecutor, TabCompleter {
 
     private boolean create(CommandSender sender, String[] args) {
         if (!(sender instanceof Player plaintiff)) {
-            sender.sendMessage("§cПодать в суд можно только от имени игрока.");
+            sender.sendMessage(messages.get("player-only"));
             return true;
         }
         if (args.length < 3) {
-            sender.sendMessage("§cИспользование: /court create <ник> <причина>");
+            sender.sendMessage(messages.get("usage-create"));
             return true;
         }
         OfflinePlayer defendant = Bukkit.getOfflinePlayerIfCached(args[1]);
@@ -58,46 +55,50 @@ public final class CourtCommand implements CommandExecutor, TabCompleter {
             defendant = Bukkit.getPlayerExact(args[1]);
         }
         if (defendant == null || !defendant.hasPlayedBefore() && !defendant.isOnline()) {
-            sender.sendMessage("§cИгрок §e" + args[1] + " §cне найден. Он должен хотя бы раз зайти на сервер.");
+            sender.sendMessage(messages.get("player-not-found", Map.of("player", args[1])));
             return true;
         }
         if (defendant.getUniqueId().equals(plaintiff.getUniqueId())) {
-            sender.sendMessage("§cНельзя подать в суд на самого себя.");
+            sender.sendMessage(messages.get("self-case"));
             return true;
         }
         String reason = String.join(" ", Arrays.copyOfRange(args, 2, args.length)).trim();
         if (reason.isEmpty()) {
-            sender.sendMessage("§cУкажите причину подачи в суд.");
+            sender.sendMessage(messages.get("reason-required"));
             return true;
         }
         courtService.createCase(plaintiff, defendant, reason);
-        sender.sendMessage("§aЗаявление в суд успешно подано.");
+        sender.sendMessage(messages.get("case-created"));
         return true;
     }
 
     private boolean view(CommandSender sender) {
         List<CourtCase> cases = courtService.getCases();
         if (cases.isEmpty()) {
-            sender.sendMessage("§eСудебных дел пока нет.");
+            sender.sendMessage(messages.get("view-empty"));
             return true;
         }
-        sender.sendMessage("§6§lMineCourt §7— список судебных дел (" + cases.size() + "):");
+        sender.sendMessage(messages.get("view-header", Map.of("count", String.valueOf(cases.size()))));
         for (int index = 0; index < cases.size(); index++) {
             CourtCase courtCase = cases.get(index);
-            sender.sendMessage("§e#" + (index + 1) + " §f" + courtCase.plaintiffName() + " §7→ §f"
-                    + courtCase.defendantName() + " §7| Причина: §f" + courtCase.reason()
-                    + " §8(" + DATE_FORMAT.format(Instant.ofEpochMilli(courtCase.createdAt())) + ")");
+            sender.sendMessage(messages.get("view-entry", Map.of(
+                    "number", String.valueOf(index + 1),
+                    "plaintiff", courtCase.plaintiffName(),
+                    "defendant", courtCase.defendantName(),
+                    "reason", courtCase.reason(),
+                    "date", messages.formatDate(courtCase.createdAt())
+            )));
         }
         return true;
     }
 
     private boolean setJudge(CommandSender sender, String[] args) {
         if (!sender.hasPermission("minecourt.setjudge")) {
-            sender.sendMessage("§cУ вас нет прав для назначения судьи.");
+            sender.sendMessage(messages.get("no-permission-judge"));
             return true;
         }
         if (args.length != 2) {
-            sender.sendMessage("§cИспользование: /court setjudge <ник>");
+            sender.sendMessage(messages.get("usage-setjudge"));
             return true;
         }
         OfflinePlayer judge = Bukkit.getOfflinePlayerIfCached(args[1]);
@@ -105,46 +106,49 @@ public final class CourtCommand implements CommandExecutor, TabCompleter {
             judge = Bukkit.getPlayerExact(args[1]);
         }
         if (judge == null || !judge.hasPlayedBefore() && !judge.isOnline()) {
-            sender.sendMessage("§cИгрок §e" + args[1] + " §cне найден. Он должен хотя бы раз зайти на сервер.");
+            sender.sendMessage(messages.get("player-not-found", Map.of("player", args[1])));
             return true;
         }
         courtService.setJudge(judge);
-        sender.sendMessage("§aСудья назначен: §e" + courtService.getJudgeName());
+        sender.sendMessage(messages.get("judge-set", Map.of("judge", courtService.getJudgeName())));
         return true;
     }
 
     private boolean close(CommandSender sender, String[] args) {
         if (!sender.hasPermission("minecourt.setjudge")) {
-            sender.sendMessage("§cУ вас нет прав для закрытия судебного дела.");
+            sender.sendMessage(messages.get("no-permission-close"));
             return true;
         }
         if (args.length != 2) {
-            sender.sendMessage("§cИспользование: /court close <номер>");
+            sender.sendMessage(messages.get("usage-close"));
             return true;
         }
         int caseNumber;
         try {
             caseNumber = Integer.parseInt(args[1]);
         } catch (NumberFormatException exception) {
-            sender.sendMessage("§cНомер дела должен быть целым числом.");
+            sender.sendMessage(messages.get("case-number-invalid"));
             return true;
         }
         CourtCase closedCase = courtService.closeCase(caseNumber);
         if (closedCase == null) {
-            sender.sendMessage("§cДело с номером §e" + caseNumber + " §cне найдено.");
+            sender.sendMessage(messages.get("case-not-found", Map.of("number", String.valueOf(caseNumber))));
             return true;
         }
-        String message = "§6[MineCourt] §fСудебное дело §e#" + caseNumber + " §fзакрыто: §e"
-                + closedCase.plaintiffName() + " §fпротив §e" + closedCase.defendantName() + "§f.";
+        String message = messages.get("case-closed", Map.of(
+                "number", String.valueOf(caseNumber),
+                "plaintiff", closedCase.plaintiffName(),
+                "defendant", closedCase.defendantName()
+        ));
         Bukkit.broadcastMessage(message);
         return true;
     }
 
     private void sendUsage(CommandSender sender) {
-        sender.sendMessage("§6MineCourt: §f/court create <ник> <причина>");
-        sender.sendMessage("§6MineCourt: §f/court view");
-        sender.sendMessage("§6MineCourt: §f/court close <номер>");
-        sender.sendMessage("§6MineCourt: §f/court setjudge <ник>");
+        sender.sendMessage(messages.get("usage-create"));
+        sender.sendMessage(messages.get("usage-view"));
+        sender.sendMessage(messages.get("usage-close"));
+        sender.sendMessage(messages.get("usage-setjudge"));
     }
 
     @Override

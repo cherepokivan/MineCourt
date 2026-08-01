@@ -40,6 +40,16 @@ When a case is closed, every online player receives a notification.
 | --- | --- | --- |
 | `minecourt.setjudge` | Allows appointing a judge and closing cases. | OP |
 
+## Language
+
+Set the `Languale` value in `plugins/MineCourt/config.yml` to choose the plugin language:
+
+```yml
+Languale: RU
+```
+
+Available values are `RU` and `EN`. On first launch, MineCourt creates `RU.yml` and `EN.yml` in its plugin folder. Edit the selected language file to customise any player-facing message. Restart the server after changing the language or messages.
+
 ## Installation
 
 1. Download `MineCourt.jar` from the Modrinth release or GitHub Actions artifact.

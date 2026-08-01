@@ -10,10 +10,15 @@ public final class MineCourtPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         saveDefaultConfig();
-        courtService = new CourtService(this);
+        if (!getConfig().isSet("Languale")) {
+            getConfig().set("Languale", "RU");
+            saveConfig();
+        }
+        MessageService messages = new MessageService(this);
+        courtService = new CourtService(this, messages);
 
-        PluginCommand command = Objects.requireNonNull(getCommand("court"), "Команда court не зарегистрирована");
-        CourtCommand courtCommand = new CourtCommand(courtService);
+        PluginCommand command = Objects.requireNonNull(getCommand("court"), "The court command is not registered");
+        CourtCommand courtCommand = new CourtCommand(courtService, messages);
         command.setExecutor(courtCommand);
         command.setTabCompleter(courtCommand);
     }
