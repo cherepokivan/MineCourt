@@ -71,6 +71,10 @@ plugins/MineCourt/config.yml
 
 Players specified in `create` or `setjudge` must be online or have joined the server at least once.
 
+## Metrics
+
+MineCourt uses [bStats](https://bstats.org/) to collect anonymous usage statistics. This helps maintain the plugin. Server owners can opt out globally in the bStats configuration file.
+
 ## Building from source
 
 This repository includes a GitHub Actions workflow that builds the plugin on every push and pull request. The compiled JAR is uploaded as the `MineCourt` workflow artifact.

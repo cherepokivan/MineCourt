@@ -1,6 +1,7 @@
 package ru.minecourt;
 
 import java.util.Objects;
+import org.bstats.bukkit.Metrics;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -10,6 +11,7 @@ public final class MineCourtPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        new Metrics(this, 33173);
         if (!getConfig().isSet("Languale")) {
             getConfig().set("Languale", "RU");
             saveConfig();
